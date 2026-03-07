@@ -103,9 +103,18 @@ $record = $DB->get_record('local_videotranscriber', ['cmid' => $cm->id]);
 if (!$record) {
     if (class_exists('\local_videotranscriber\observer')) {
         $triggered = \local_videotranscriber\observer::trigger_transcription($cm->id, $cm->course, $url->externalurl);
+        // --- DEBUG ATIVADO PARA O USUÁRIO VER NA TELA ---
+        echo '<div style="background:#fff3cd;padding:10px;border:1px solid #ffeeba;color:#856404;margin:10px 0;">';
+        echo '<strong>[DEBUG DO SISTEMA] Tentativa de Início Automático:</strong><br>';
+        echo 'URL do Vídeo: ' . htmlspecialchars($url->externalurl) . '<br>';
+        echo 'Trigger Executado com Sucesso?: ' . ($triggered ? 'SIM' : 'NÃO') . '<br>';
+        echo '</div>';
+        
         if ($triggered) {
             $record = $DB->get_record('local_videotranscriber', ['cmid' => $cm->id]);
         }
+    } else {
+        echo '<div style="color:red">[DEBUG] Classe local_videotranscriber\observer não encontrada!</div>';
     }
 }
 
@@ -128,6 +137,7 @@ if ($record) {
         echo '  <div style="width:100%;background-color:#e0e0e0;border-radius:4px;height:20px;overflow:hidden;position:relative;">';
         echo '      <div id="vt-progress-bar" style="width:100%;background-color:#2196F3;height:100%;animation: vt-pulse 1.5s infinite alternate;"></div>';
         echo '  </div>';
+        echo '  <div style="margin-top:10px;font-size:11px;color:#999;">A tarefa adhoc Moodle foi engatilhada. Ela depende do cron rodar no servidor.</div>';
         echo '</div>';
         echo '<style>@keyframes vt-pulse { from { opacity: 0.6; } to { opacity: 1; } }</style>';
         echo '<script>';
