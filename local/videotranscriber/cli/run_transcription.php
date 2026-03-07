@@ -60,8 +60,19 @@ if (!$record_id || !$video_url) {
 // 3. HELPERS — log, status e banco
 // ================================================================
 function vt_log(string $msg): void {
-    echo '[' . date('H:i:s') . '] ' . $msg . "\n";
+    global $CFG;
+    $timestamp = '[' . date('Y-m-d H:i:s') . '] ';
+    echo $timestamp . $msg . "\n";
     flush();
+
+    // Log em arquivo para debug na VM
+    if (isset($CFG->dataroot)) {
+        $log_file = rtrim($CFG->dataroot, '/\\') . DIRECTORY_SEPARATOR . 'temp' . DIRECTORY_SEPARATOR . 'vt_debug.log';
+        if (!is_dir(dirname($log_file))) {
+            @mkdir(dirname($log_file), 0777, true);
+        }
+        @file_put_contents($log_file, $timestamp . $msg . "\n", FILE_APPEND);
+    }
 }
 
 function vt_status(int $id, string $msg): void {
@@ -71,7 +82,7 @@ function vt_status(int $id, string $msg): void {
     $upd->transcription = $msg;
     $upd->timemodified = time();
     $DB->update_record('local_videotranscriber', $upd);
-    vt_log($msg);
+    vt_log("STATUS: " . $msg);
 }
 
 function vt_done(int $id, string $text): void {
@@ -94,6 +105,7 @@ function vt_fail(int $id, string $msg): void {
     $upd->timemodified = time();
     $DB->update_record('local_videotranscriber', $upd);
     fwrite(STDERR, '[ERRO] ' . $msg . "\n");
+    vt_log("FALHA CRÍTICA: " . $msg);
 }
 
 function vt_cleanup(string $file): void {
@@ -105,11 +117,12 @@ function vt_cleanup(string $file): void {
 // ================================================================
 // 4. VALIDA REGISTRO
 // ================================================================
+vt_log("=========================================");
 vt_log("Iniciando transcrição | record_id=$record_id | url=$video_url");
 
 $vt_record = $DB->get_record('local_videotranscriber', ['id' => $record_id]);
 if (!$vt_record) {
-    fwrite(STDERR, "[ERRO] Registro ID=$record_id não existe no banco.\n");
+    vt_log("[ERRO] Registro ID=$record_id não existe no banco.");
     exit(1);
 }
 
@@ -151,26 +164,49 @@ if (empty($apikey)) {
 vt_log('API Key OK: ' . substr($apikey, 0, 8) . '...');
 
 // ================================================================
-// 6. BINÁRIOS
+// 6. BINÁRIOS (Corrigido para resolver PATHs no Debian/Linux)
 // ================================================================
 $bin_dir = realpath($CFG->dirroot . '/local/videotranscriber/cli/bin') ?: '';
 
-$ytdlp = '';
-foreach ([
+$ytdlp = 'yt-dlp'; // fallback padrão
+$ffmpeg = 'ffmpeg';
+
+// Procura yt-dlp explicitamente em diretórios comuns de Linux, pois em exec() o $PATH do Apache costuma ser limitado
+$ytdlp_candidates = [
     $bin_dir . DIRECTORY_SEPARATOR . 'yt-dlp.exe',
     $bin_dir . DIRECTORY_SEPARATOR . 'yt-dlp',
-    'yt-dlp.exe',
-    'yt-dlp',
-] as $candidate) {
-    if ($candidate && (is_file($candidate) || ($candidate === 'yt-dlp.exe' || $candidate === 'yt-dlp'))) {
+    '/usr/local/bin/yt-dlp',
+    '/usr/bin/yt-dlp',
+    '/opt/homebrew/bin/yt-dlp'
+];
+
+foreach ($ytdlp_candidates as $candidate) {
+    if ($candidate && is_file($candidate)) {
+        if (!is_executable($candidate)) {
+            @chmod($candidate, 0755); // Tenta dar permissão caso não tenha
+        }
         $ytdlp = $candidate;
         break;
     }
 }
 
-$ffmpeg_dir_flag = $bin_dir ? ' --ffmpeg-location ' . escapeshellarg($bin_dir) : '';
+// Localiza o FFMPEG absolute path também
+foreach (['/usr/bin/ffmpeg', '/usr/local/bin/ffmpeg'] as $cand) {
+    if (is_file($cand)) {
+        $ffmpeg = $cand;
+        break;
+    }
+}
 
-vt_log('Binários: yt-dlp=' . ($ytdlp ?: 'não encontrado') . ' | ffmpeg_dir=' . ($bin_dir ?: 'PATH do sistema'));
+$ffmpeg_dir_flag = '';
+if ($bin_dir && is_file($bin_dir . DIRECTORY_SEPARATOR . 'ffmpeg.exe')) {
+    $ffmpeg_dir_flag = ' --ffmpeg-location ' . escapeshellarg($bin_dir);
+} elseif ($ffmpeg !== 'ffmpeg') {
+    // Se achamos o path absoluto no linux, passa pro yt-dlp para ele não se perder
+    $ffmpeg_dir_flag = ' --ffmpeg-location ' . escapeshellarg(dirname($ffmpeg));
+}
+
+vt_log('Binários: yt-dlp=' . $ytdlp . ' | ffmpeg=' . $ffmpeg);
 
 // ================================================================
 // 7. DOWNLOAD DO ÁUDIO
@@ -222,9 +258,10 @@ if ($is_youtube) {
             "❌ Falha ao baixar o YouTube (código $ret_code).\n\n" .
             "Possíveis causas:\n" .
             "• O vídeo é privado ou indisponível\n" .
-            "• O yt-dlp não está instalado na pasta cli/bin/\n" .
-            "• O ffmpeg não foi encontrado\n\n" .
-            "Saída do yt-dlp:\n" . mb_substr($output_str, 0, 1000)
+            "• O yt-dlp não está instalado (ou sem permissão) em /usr/local/bin/yt-dlp\n" .
+            "• O ffmpeg não foi encontrado no PATH\n\n" .
+            "Comando executado:\n$cmd\n\n" .
+            "Saída do processo:\n" . mb_substr($output_str, 0, 1500)
         );
         exit(1);
     }
