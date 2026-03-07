@@ -98,6 +98,17 @@ if ($redirect && !$forceview) {
 
 $record = $DB->get_record('local_videotranscriber', ['cmid' => $cm->id]);
 
+// TRIGGER AUTOMÁTICO DE FALLBACK
+// Se o evento falhou, mas a URL tem um vídeo, iniciamos a transcrição no primeiro acesso.
+if (!$record) {
+    if (class_exists('\local_videotranscriber\observer')) {
+        $triggered = \local_videotranscriber\observer::trigger_transcription($cm->id, $cm->course, $url->externalurl);
+        if ($triggered) {
+            $record = $DB->get_record('local_videotranscriber', ['cmid' => $cm->id]);
+        }
+    }
+}
+
 echo '<div style="margin-top:20px;text-align:center;">';
 
 if ($record) {
@@ -141,6 +152,7 @@ if ($record) {
         echo '<div style="font-size:13px;color:#666;">' . htmlspecialchars($record->transcription) . '</div>';
     }
 } else {
+    // Apenas links não suportados (ex: wikipedia) caem aqui após o fallback
     echo '<div style="color:#757575;font-size:13px;">Vídeo sem transcrição agendada.</div>';
 }
 
