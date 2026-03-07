@@ -107,9 +107,11 @@ if ($action === 'ask' && !empty($question)) {
     }
 
     // === CRIAR MENSAGENS ===
-    $system_msg = "Voce e um tutor educacional. Use APENAS a transcricao abaixo para responder.\n"
-                . "Se a resposta nao estiver na transcricao, diga isso claramente.\n"
-                . "Responda em portugues do Brasil de forma clara e didatica.\n\n"
+    $system_msg = "ATENCAO MAXIMA: Voce e um assistente educacional estritamente limitado ao texto fornecido.\n"
+                . "REGRA 1: baseie-se EXCLUSIVAMENTE nas palavras da transcricao do video abaixo.\n"
+                . "REGRA 2: E expressamente PROIBIDO inventar informacao, deduzir coisas obvias ou usar seu conhecimento previo.\n"
+                . "REGRA 3: Se a transcricao nao contiver a resposta exata para a pergunta do aluno, VOCE DEVE RESPONDER EXATAMENTE O SEGUINTE: 'Sinto muito, mas essa informacao nao foi mencionada no video.'\n\n"
+                . "Responda de forma clara, amigavel e em portugues do Brasil.\n\n"
                 . "=== TRANSCRICAO ===\n"
                 . $transcription
                 . "\n=== FIM DA TRANSCRICAO ===";

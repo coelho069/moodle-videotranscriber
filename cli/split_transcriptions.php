@@ -11,7 +11,8 @@ $records = $DB->get_records('local_videotranscriber');
 
 foreach ($records as $r) {
     $text = trim((string)$r->transcription);
-    if ($text === '') continue;
+    if ($text === '')
+        continue;
     // simples split por paragrafo até atingir maxlength
     $parts = preg_split("/\n{1,}/", $text);
     $chunks = [];
@@ -20,14 +21,16 @@ foreach ($records as $r) {
     foreach ($parts as $p) {
         if (mb_strlen($current . "\n\n" . $p) <= $maxlength) {
             $current = ($current === '') ? $p : ($current . "\n\n" . $p);
-        } else {
+        }
+        else {
             if ($current !== '') {
                 $chunks[] = $current;
             }
             $current = $p;
         }
     }
-    if ($current !== '') $chunks[] = $current;
+    if ($current !== '')
+        $chunks[] = $current;
 
     // gravar chunks
     $i = 0;
