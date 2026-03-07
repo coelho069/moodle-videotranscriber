@@ -11,6 +11,7 @@ function videotranscriber_openai_chat($transcription, $question)
 
     $data = [
         "model" => "gpt-4o-mini",
+        "temperature" => 0.0,
         "messages" => [
             [
                 "role" => "system",
