@@ -16,6 +16,10 @@
 declare(strict_types=1);
 define('CLI_SCRIPT', true);
 
+// Previne que o script morra por timeout ou falta de memória em vídeos longos na VM
+@set_time_limit(0);
+@ini_set('memory_limit', '512M');
+
 // ================================================================
 // 1. BOOTSTRAP — localiza e carrega o Moodle
 // ================================================================
