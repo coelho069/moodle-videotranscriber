@@ -100,30 +100,48 @@ $record = $DB->get_record('local_videotranscriber', ['cmid' => $cm->id]);
 
 echo '<div style="margin-top:20px;text-align:center;">';
 
-if ($record && !empty($record->transcription)) {
-
-    echo '<div style="color:#2e7d32;font-weight:bold;">✔ Transcrição disponível</div>';
-
-    $urltutor = new moodle_url('/local/videotranscriber/view.php', [
-        'cmid' => $cm->id
-    ]);
-
-    echo '<div style="margin-top:15px;">';
-    echo html_writer::link(
-        $urltutor,
-        'Abrir Tutor IA',
-        [
+if ($record) {
+    if ($record->status === 'completed' && !empty($record->transcription)) {
+        echo '<div style="color:#2e7d32;font-weight:bold;">✔ Transcrição disponível</div>';
+        $urltutor = new moodle_url('/local/videotranscriber/view.php', ['cmid' => $cm->id]);
+        echo '<div style="margin-top:15px;">';
+        echo html_writer::link($urltutor, 'Abrir Tutor IA', [
             'class' => 'btn btn-primary',
             'style' => 'font-size:16px;padding:10px 20px;'
-        ]
-    );
-    echo '</div>';
-
+        ]);
+        echo '</div>';
+    } else if ($record->status === 'processing') {
+        echo '<div id="vt-progress-container" style="max-width:400px;margin:0 auto;">';
+        echo '  <div style="font-weight:bold;color:#1976d2;margin-bottom:10px;">⏳ Processando transcrição com IA...</div>';
+        echo '  <p id="vt-status-text" style="font-size:13px;color:#555;">' . (empty($record->transcription) ? 'Iniciando extração...' : htmlspecialchars($record->transcription)) . '</p>';
+        echo '  <div style="width:100%;background-color:#e0e0e0;border-radius:4px;height:20px;overflow:hidden;position:relative;">';
+        echo '      <div id="vt-progress-bar" style="width:100%;background-color:#2196F3;height:100%;animation: vt-pulse 1.5s infinite alternate;"></div>';
+        echo '  </div>';
+        echo '</div>';
+        echo '<style>@keyframes vt-pulse { from { opacity: 0.6; } to { opacity: 1; } }</style>';
+        echo '<script>';
+        echo '  setInterval(function() {';
+        echo '      fetch("' . new moodle_url('/ajax/status.php', ['cmid' => $cm->id]) . '")';
+        echo '      .then(r => r.json())';
+        echo '      .then(data => {';
+        echo '          if(data.status == "completed") {';
+        echo '              location.reload();'; // Reload to show the tutor button
+        echo '          } else if(data.status == "processing") {';
+        echo '              if(data.transcription) {';
+        echo '                  document.getElementById("vt-status-text").innerText = data.transcription;';
+        echo '              }';
+        echo '          } else if(data.status == "error") {';
+        echo '              location.reload();';
+        echo '          }';
+        echo '      }).catch(e => console.error("Error polling status", e));';
+        echo '  }, 3000);';
+        echo '</script>';
+    } else {
+        echo '<div style="color:#c62828;font-weight:bold;">✖ Falha na transcrição</div>';
+        echo '<div style="font-size:13px;color:#666;">' . htmlspecialchars($record->transcription) . '</div>';
+    }
 } else {
-
-    echo '<div style="color:#c62828;font-weight:bold;">✖ Falha na transcrição</div>';
-    echo '<div>Não foi possível processar este vídeo.</div>';
-
+    echo '<div style="color:#757575;font-size:13px;">Vídeo sem transcrição agendada.</div>';
 }
 
 echo '</div>';
