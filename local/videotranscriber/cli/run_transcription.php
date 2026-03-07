@@ -42,6 +42,10 @@ if (!$moodle_root) {
 
 require_once($moodle_root . '/config.php');
 
+// Muda o diretório de trabalho para a raiz do Moodle
+// Isso previne erros de include/require em plugins de terceiros e core tools
+chdir($moodle_root);
+
 global $DB, $CFG;
 
 // ================================================================
@@ -355,9 +359,10 @@ curl_setopt_array($ch, [
     CURLOPT_HTTPHEADER     => [
         'Authorization: Bearer ' . $apikey,
     ],
-    CURLOPT_TIMEOUT        => 600,    // 10 minutos para vídeos longos
+    CURLOPT_TIMEOUT        => 1200,   // 20 minutos para vídeos longos e upload lento
     CURLOPT_SSL_VERIFYPEER => false,  // necessário em alguns ambientes XAMPP/Windows
-    CURLOPT_CONNECTTIMEOUT => 30,
+    CURLOPT_CONNECTTIMEOUT => 60,
+    CURLOPT_IPRESOLVE      => CURL_IPRESOLVE_V4, // Força IPv4 (evita timeouts em VMs com IPv6 mal configurado)
 ]);
 
 $response  = curl_exec($ch);
