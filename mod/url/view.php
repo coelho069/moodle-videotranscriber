@@ -96,37 +96,6 @@ if ($redirect && !$forceview) {
     redirect($fullurl);
 }
 
-$record = $DB->get_record('local_videotranscriber', ['cmid' => $cm->id]);
-
-echo '<div style="margin-top:20px;text-align:center;">';
-
-if ($record && !empty($record->transcription)) {
-
-    echo '<div style="color:#2e7d32;font-weight:bold;">✔ Transcrição disponível</div>';
-
-    $urltutor = new moodle_url('/local/videotranscriber/view.php', [
-        'cmid' => $cm->id
-    ]);
-
-    echo '<div style="margin-top:15px;">';
-    echo html_writer::link(
-        $urltutor,
-        'Abrir Tutor IA',
-        [
-            'class' => 'btn btn-primary',
-            'style' => 'font-size:16px;padding:10px 20px;'
-        ]
-    );
-    echo '</div>';
-
-} else {
-
-    echo '<div style="color:#c62828;font-weight:bold;">✖ Falha na transcrição</div>';
-    echo '<div>Não foi possível processar este vídeo.</div>';
-
-}
-
-echo '</div>';
 switch ($displaytype) {
     case RESOURCELIB_DISPLAY_EMBED:
         url_display_embed($url, $cm, $course);
@@ -134,35 +103,6 @@ switch ($displaytype) {
     case RESOURCELIB_DISPLAY_FRAME:
         url_display_frame($url, $cm, $course);
         break;
-    default:
-        url_print_workaround($url, $cm, $course);
-        break;
-}
-
-$urltutor = new moodle_url('/local/videotranscriber/view.php', [
-    'cmid' => $cm->id
-]);
-
-echo html_writer::div(
-    html_writer::link(
-        $urltutor,
-        'Abrir Tutor IA',
-        [
-            'class' => 'btn btn-primary',
-            'style' => 'margin-top:20px;font-size:16px;'
-        ]
-    )
-);
-
-switch ($displaytype) {
-    case RESOURCELIB_DISPLAY_EMBED:
-        url_display_embed($url, $cm, $course);
-        break;
-
-    case RESOURCELIB_DISPLAY_FRAME:
-        url_display_frame($url, $cm, $course);
-        break;
-
     default:
         url_print_workaround($url, $cm, $course);
         break;
