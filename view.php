@@ -12,9 +12,44 @@ $context = context_module::instance($cmid);
 require_capability('mod/url:view', $context);
 
 $record = $DB->get_record('local_videotranscriber', ['cmid' => $cmid]);
-if (!$record) {
-    throw new moodle_exception('notranscription', 'local_videotranscriber',
-        new moodle_url('/course/view.php', ['id' => $course->id]));
+
+if (!$record || empty($record->transcription)) {
+    if ($action === 'ask') {
+        header('Content-Type: application/json; charset=utf-8');
+        http_response_code(400);
+        echo json_encode(['success' => false, 'error' => 'A transcrição para este vídeo ainda não está pronta.']);
+        exit;
+    }
+    
+    $PAGE->set_url('/local/videotranscriber/view.php', ['cmid' => $cmid]);
+    $PAGE->set_context($context);
+    $PAGE->set_course($course);
+    $PAGE->set_cm($cm);
+    $PAGE->set_title('Tutor IA: ' . $cm->name);
+    $PAGE->set_heading($course->fullname);
+    $PAGE->set_pagelayout('incourse');
+    
+    echo $OUTPUT->header();
+    
+    echo html_writer::start_div('card shadow-sm mb-4 mt-4');
+    echo html_writer::start_div('card-header bg-warning text-dark');
+    echo html_writer::tag('h4', '⏳ Transcrição Indisponível', ['class' => 'mb-0']);
+    echo html_writer::end_div();
+    echo html_writer::start_div('card-body');
+    echo html_writer::tag('p', 'A transcrição para este vídeo ainda não foi concluída ou o registro não foi encontrado. O processamento geralmente leva alguns minutos. Por favor, aguarde e recarregue a página.', ['class' => 'mb-0']);
+    echo html_writer::end_div();
+    echo html_writer::end_div();
+    
+    echo html_writer::start_div('mt-4');
+    echo html_writer::link(
+        new moodle_url('/course/view.php', ['id' => $course->id]),
+        '← Voltar ao curso',
+        ['class' => 'btn btn-outline-secondary btn-sm']
+    );
+    echo html_writer::end_div();
+    
+    echo $OUTPUT->footer();
+    exit;
 }
 
 // AJAX - processa pergunta.
