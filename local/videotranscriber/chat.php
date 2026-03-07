@@ -55,7 +55,7 @@ if ($usechunks) {
     $i = 0;
     foreach ($words as $w) {
         $w = trim($w);
-        if ($w === '' || strlen($w) < 3) {
+        if ($w === '' || mb_strlen($w) < 3) {
             continue;
         }
         $i++;
@@ -70,7 +70,7 @@ if ($usechunks) {
     if (!empty($conds)) {
         $sql = "SELECT content FROM {local_vt_chunks}
                  WHERE " . implode(' OR ', $conds) . "
-              ORDER BY LENGTH(content) ASC";
+              ORDER BY " . $DB->sql_length('content') . " ASC";
         $rows = $DB->get_records_sql($sql, $params, 0, 5);
         $parts = [];
         foreach ($rows as $r) {

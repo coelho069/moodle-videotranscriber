@@ -64,9 +64,7 @@ class tutor_service {
         $question = trim($question);
 
         if ($question === '') {
-            throw new \invalid_parameter_exception(
-                get_string('error_emptyquestion', 'local_videotranscriber')
-            );
+            throw new \moodle_exception('error_emptyquestion', 'local_videotranscriber');
         }
 
         $context = $this->build_context($contextchunks);
