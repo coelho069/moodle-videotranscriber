@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<XMLDB PATH="local/videotranscriber/db" VERSION="2026030602" COMMENT="XMLDB file for local_videotranscriber"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:noNamespaceSchemaLocation="../../../lib/xmldb/xmldb.xsd"
+>
+  <TABLES>
+    <TABLE NAME="local_videotranscriber" COMMENT="Stores video transcription data for course modules.">
+      <FIELDS>
+        <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="true"/>
+        <FIELD NAME="cmid" TYPE="int" LENGTH="10" NOTNULL="true" COMMENT="Course module ID"/>
+        <FIELD NAME="status" TYPE="char" LENGTH="20" NOTNULL="true" DEFAULT="pending" COMMENT="Transcription status: pending, processing, completed, failed"/>
+        <FIELD NAME="transcription" TYPE="text" NOTNULL="false" COMMENT="Full transcription text"/>
+        <FIELD NAME="timecreated" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0"/>
+        <FIELD NAME="timemodified" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0"/>
+      </FIELDS>
+      <KEYS>
+        <KEY NAME="primary" TYPE="primary" FIELDS="id"/>
+      </KEYS>
+      <INDEXES>
+        <INDEX NAME="cmid_idx" UNIQUE="true" FIELDS="cmid"/>
+      </INDEXES>
+    </TABLE>
+    <TABLE NAME="local_vt_chunks" COMMENT="Stores chunked transcription data for better context retrieval.">
+      <FIELDS>
+        <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="true"/>
+        <FIELD NAME="videoid" TYPE="int" LENGTH="10" NOTNULL="true" COMMENT="Foreign key to local_videotranscriber.id"/>
+        <FIELD NAME="chunk_index" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0"/>
+        <FIELD NAME="content" TYPE="text" NOTNULL="false" COMMENT="Chunk text content"/>
+      </FIELDS>
+      <KEYS>
+        <KEY NAME="primary" TYPE="primary" FIELDS="id"/>
+        <KEY NAME="videoid_fk" TYPE="foreign" FIELDS="videoid" REFTABLE="local_videotranscriber" REFFIELDS="id"/>
+      </KEYS>
+      <INDEXES>
+        <INDEX NAME="videoid_chunkindex_idx" UNIQUE="false" FIELDS="videoid, chunk_index"/>
+      </INDEXES>
+    </TABLE>
+  </TABLES>
+</XMLDB>
