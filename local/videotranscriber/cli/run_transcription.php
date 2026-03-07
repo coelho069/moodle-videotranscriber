@@ -225,12 +225,14 @@ $audio_file = '';
 
 $is_youtube = (bool)preg_match('#(youtube\.com/watch|youtu\.be/|youtube\.com/shorts/)#i', $video_url);
 
+vt_status($record_id, '[10%] Preparando para baixar mídia...');
+
 if ($is_youtube) {
     // --- YouTube via yt-dlp ---
     $audio_file = $tmp . DIRECTORY_SEPARATOR . 'vt_yt_' . $unique . '.%(ext)s';
     $final_file = $tmp . DIRECTORY_SEPARATOR . 'vt_yt_' . $unique . '.m4a';
 
-    vt_status($record_id, '⏬ Baixando áudio do YouTube (aguarde, pode levar alguns minutos)...');
+    vt_status($record_id, '[25%] ⏬ Baixando áudio do YouTube (aguarde, pode levar alguns minutos)...');
 
     $cmd = escapeshellarg($ytdlp)
          . $ffmpeg_dir_flag
@@ -280,7 +282,7 @@ if ($is_youtube) {
     $ext        = strtolower(pathinfo($path_info, PATHINFO_EXTENSION)) ?: 'mp4';
     $audio_file = $tmp . DIRECTORY_SEPARATOR . 'vt_dl_' . $unique . '.' . $ext;
 
-    vt_status($record_id, '⏬ Baixando arquivo de mídia...');
+    vt_status($record_id, '[25%] ⏬ Baixando arquivo de mídia...');
 
     $fp = @fopen($audio_file, 'wb');
     if (!$fp) {
@@ -334,7 +336,7 @@ if ($size_bytes > 25 * 1024 * 1024) {
 // ================================================================
 // 9. OPENAI WHISPER — transcrição
 // ================================================================
-vt_status($record_id, "🤖 Enviando {$size_mb}MB para o Whisper transcrever... (pode levar minutos)");
+vt_status($record_id, "[60%] 🤖 Enviando {$size_mb}MB para o Whisper transcrever... (pode levar minutos)");
 
 // Detecta o mime type correto para o Whisper
 $ext_map = [

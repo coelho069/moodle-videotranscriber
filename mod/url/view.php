@@ -176,23 +176,40 @@ function vt_build_panel($record, $cm, $CFG) {
 
     } else {
         // Status: processing
-        $status_msg = !empty($record->transcription) ? htmlspecialchars($record->transcription) : 'Iniciando processo de transcrição...';
+        $raw_msg = !empty($record->transcription) ? $record->transcription : '[5%] Iniciando processo de transcrição...';
+        
+        $percent = 5;
+        if (preg_match('/\[(\d+)%\]\s*(.*)/', $raw_msg, $matches)) {
+            $percent    = (int)$matches[1];
+            $status_msg = htmlspecialchars(trim($matches[2]));
+        } else {
+            $status_msg = htmlspecialchars($raw_msg);
+        }
 
         $html .= '<p style="color:#1976d2;font-size:16px;font-weight:bold;margin-bottom:12px;">⏳ Processando transcrição com IA...</p>';
         $html .= '<p id="vt-status-msg" style="font-size:13px;color:#546e7a;margin-bottom:14px;">' . $status_msg . '</p>';
-        $html .= '<div style="width:100%;height:12px;background:#cfd8dc;border-radius:6px;overflow:hidden;">';
-        $html .= '<div id="vt-bar" style="width:100%;height:100%;background:linear-gradient(90deg,#42a5f5,#1565c0);animation:vt-slide 1.8s ease-in-out infinite alternate;"></div>';
+        $html .= '<div style="width:100%;height:14px;background:#e0e0e0;border-radius:7px;overflow:hidden;box-shadow:inset 0 1px 3px rgba(0,0,0,0.1);">';
+        $html .= '<div id="vt-bar" style="width:' . $percent . '%;height:100%;background:linear-gradient(90deg,#42a5f5,#1e88e5);border-radius:7px;transition:width 0.4s ease;"></div>';
         $html .= '</div>';
+        $html .= '<p id="vt-percent-lbl" style="font-size:11px;color:#1e88e5;font-weight:bold;margin-top:6px;">' . $percent . '%</p>';
         $html .= '<p style="font-size:11px;color:#90a4ae;margin-top:10px;">Este processo pode demorar alguns minutos dependendo do tamanho do vídeo.</p>';
-        $html .= '<style>@keyframes vt-slide{0%{transform:translateX(-30%) scaleX(0.4)}100%{transform:translateX(0) scaleX(1)}}</style>';
         $html .= '<script>';
         $html .= '(function(){';
         $html .= 'var vtUrl=' . json_encode($status_url) . ';';
         $html .= 'function poll(){fetch(vtUrl).then(function(r){return r.json();}).then(function(data){';
         $html .= 'if(data.status==="completed"||data.status==="error"){location.reload();}';
-        $html .= 'else if(data.transcription){var el=document.getElementById("vt-status-msg");if(el)el.innerText=data.transcription;}';
+        $html .= 'else if(data.transcription){';
+        $html .= '  var msg = data.transcription;';
+        $html .= '  var p = msg.match(/\[(\d+)%\]\s*(.*)/);';
+        $html .= '  if(p){';
+        $html .= '    document.getElementById("vt-bar").style.width = p[1] + "%";';
+        $html .= '    document.getElementById("vt-percent-lbl").innerText = p[1] + "%";';
+        $html .= '    msg = p[2];';
+        $html .= '  }';
+        $html .= '  var el=document.getElementById("vt-status-msg");if(el)el.innerText=msg;';
+        $html .= '}';
         $html .= '}).catch(function(e){console.warn("VT poll",e);});}';
-        $html .= 'setInterval(poll,4000);';
+        $html .= 'setInterval(poll, 3000);';
         $html .= '})();';
         $html .= '</script>';
     }
