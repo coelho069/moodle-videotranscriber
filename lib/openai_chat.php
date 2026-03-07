@@ -2,14 +2,12 @@
 
 defined('MOODLE_INTERNAL') || die();
 
-function videotranscriber_openai_chat($transcription, $question) {
+function videotranscriber_openai_chat($transcription, $question)
+{
 
     $apikey = getenv('OPENAI_API_KEY');
 
-    $prompt = "Transição da aula (Contexto):\n"
-. $transcription . "\n\n"
-. "Pergunta do aluno:\n"
-. $question;
+    $prompt = "Transição da aula (Contexto):\n" . $transcription . "\n\n" . "Pergunta do aluno:\n" . $question;
 
     $data = [
         "model" => "gpt-4o-mini",
@@ -31,7 +29,7 @@ function videotranscriber_openai_chat($transcription, $question) {
 
     $headers = [
         "Content-Type: application/json",
-        "Authorization: Bearer ".$apikey
+        "Authorization: Bearer " . $apikey
     ];
 
     curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
@@ -48,7 +46,7 @@ function videotranscriber_openai_chat($transcription, $question) {
 
         curl_close($ch);
 
-        return "Erro CURL: ".$error;
+        return "Erro CURL: " . $error;
     }
 
     $httpcode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
@@ -57,7 +55,7 @@ function videotranscriber_openai_chat($transcription, $question) {
 
     if ($httpcode != 200) {
 
-        return "Erro HTTP ".$httpcode;
+        return "Erro HTTP " . $httpcode;
     }
 
     $json = json_decode($response, true);
