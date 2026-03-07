@@ -1,7 +1,7 @@
 <?php
 /**
  * Plugin version and metadata.
- * @package local_videotranscriber
+ * @package local_videotranscri
  */
 
 defined('MOODLE_INTERNAL') || die();
