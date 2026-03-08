@@ -24,8 +24,9 @@ global $DB, $CFG, $PAGE;
 // Se for acesso por navegador, exige login como admin
 if (!CLI_SCRIPT) {
     require_login();
-    require_capability('moodle/site:config', context_system::instance());
-    $PAGE->set_context(context_system::instance());
+    $syscontext = context_system::instance();
+    require_capability('moodle/site:config', $syscontext);
+    $PAGE->set_context($syscontext);
     $PAGE->set_url('/local/videotranscriber/cli/force_all.php');
     echo $OUTPUT->header();
     echo $OUTPUT->heading('Forçando Transcrições Pendentes');
