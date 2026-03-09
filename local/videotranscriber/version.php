@@ -1,6 +1,6 @@
 <?php
 defined('MOODLE_INTERNAL') || die();
-$plugin->version   = 2030010100;
+$plugin->version   = 2032010100;
 $plugin->requires  = 2022041900;
 $plugin->component = 'local_videotranscriber';
 $plugin->maturity  = MATURITY_STABLE;
