@@ -126,44 +126,36 @@ $PAGE->activityheader->set_description(url_get_intro($url, $cm));
 
 // ============================================================
 // INJEÇÃO ROBUSTA DO PAINEL VT IA E CAPTURA DE TELA
-// A maioria das resoluções do módulo URL usam die() ou exit() internamente
-// Então registramos uma função ao encerramento do script para capturar 
-// o output da página atual e costurar o HTML do Tutor no final.
+// Para contornar os die() internos de algumas funções do Moodle
+// criamos um truque de output buffering.
 // ============================================================
-$GLOBALS['vt_record'] = $vt_record;
-$GLOBALS['vt_cm'] = $cm;
-$GLOBALS['vt_CFG'] = $CFG;
-
 ob_start();
-
-register_shutdown_function(function() {
-    global $vt_record, $vt_cm, $vt_CFG;
-    $page_output = ob_get_clean();
-    
-    // Constrói o HTML do Painel
-    $panel = vt_build_panel($vt_record, $vt_cm, $vt_CFG);
-    
-    // Tenta injetar logo antes do final do container principal do Moodle ou do </body>
-    if (strpos($page_output, '</body>') !== false) {
-        $page_output = str_replace('</body>', $panel . '</body>', $page_output);
-    } else {
-        $page_output .= $panel;
-    }
-    
-    echo $page_output;
-});
 
 switch ($displaytype) {
     case RESOURCELIB_DISPLAY_EMBED:
         url_display_embed($url, $cm, $course);
-        break; // A função acima deve executar die() internamente.
+        break; 
     case RESOURCELIB_DISPLAY_FRAME:
         url_display_frame($url, $cm, $course);
-        break; // A função acima deve executar die() internamente.
+        break; 
     default:
         url_print_workaround($url, $cm, $course);
-        break; // A função acima deve executar die() internamente.
+        break; 
 }
+
+// Em layouts normais de Moodle (sem iframe blindado) o Moodle pode não disparar die()
+$page_output = ob_get_clean();
+
+// Pega apenas a string construída sem imprimir do Painel
+$panel = vt_build_panel($vt_record, $cm, $CFG);
+
+// Tentativa de embutir no body
+if (strpos($page_output, '</body>') !== false) {
+    echo str_replace('</body>', $panel . '</body>', $page_output);
+} else {
+    echo $page_output . $panel;
+}
+
 
 // ============================================================
 // Função para montar o HTML do painel de transcrição
