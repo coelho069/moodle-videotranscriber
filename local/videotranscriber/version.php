@@ -6,7 +6,7 @@
 
 defined('MOODLE_INTERNAL') || die();
 
-$plugin->version   = 2024010110; // Versão atual (AAAAMMDDRR)
+$plugin->version   = 2026030900; // Versão atual (AAAAMMDDRR)
 $plugin->requires  = 2022041900; // Moodle 4.0+
 $plugin->component = 'local_videotranscriber';
 $plugin->maturity  = MATURITY_STABLE;
