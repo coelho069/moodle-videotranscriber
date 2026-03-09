@@ -122,39 +122,28 @@ if ($vt_record === false || $vt_record === null) {
 // Renderiza o conteúdo do módulo URL (player, link, embed...)
 // As funções url_display_* já incluem header e footer do Moodle
 // ============================================================
-$PAGE->activityheader->set_description(url_get_intro($url, $cm));
-
-// ============================================================
-// INJEÇÃO ROBUSTA DO PAINEL VT IA E CAPTURA DE TELA
-// Para contornar os die() internos de algumas funções do Moodle
-// criamos um truque de output buffering.
-// ============================================================
-
-
-// ============================================================
-// Renderiza o painel do Tutor de IA dependendo do status da transcrição
-// ============================================================
-echo '<div style="margin-top:20px;text-align:center;">';
-
+$info_html = '<div style="margin-top:20px;margin-bottom:20px;text-align:center;border:1px solid #cfd8dc;border-radius:8px;padding:15px;background-color:#f8f9fa;">';
 if ($vt_record && !empty($vt_record->transcription)) {
-    echo '<div style="color:#2e7d32;font-weight:bold;">✔ Transcrição disponível</div>';
-
-    $urltutor = new moodle_url('/local/videotranscriber/view.php', [
-        'cmid' => $cm->id
-    ]);
-
-    echo '<div style="margin-top:15px;">';
-    echo html_writer::link(
-        $urltutor,
-        'Abrir Tutor IA',
-        [
-            'class' => 'btn btn-primary',
-            'style' => 'font-size:16px;padding:10px 20px;'
-        ]
-    );
-    echo '</div>';
+    $info_html .= '<div style="color:#2e7d32;font-weight:bold;margin-bottom:10px;">✔ Transcrição e Tutor IA disponíveis</div>';
+    $urltutor = new moodle_url('/local/videotranscriber/view.php', ['cmid' => $cm->id]);
+    $info_html .= html_writer::link($urltutor, '🤖 Abrir Tutor IA', ['class' => 'btn btn-primary', 'style' => 'font-size:16px;padding:10px 20px;']);
 } else {
-    echo '<div style="color:#c62828;font-weight:bold;">⏳ Transcrição pendente ou em processamento...</div>';
+    $info_html .= '<div style="color:#c62828;font-weight:bold;">⏳ Transcrição pendente ou em processamento... Atualize a página em breve.</div>';
+}
+$info_html .= '</div>';
+
+$new_intro = url_get_intro($url, $cm) . $info_html;
+$PAGE->activityheader->set_description($new_intro);
+
+switch ($displaytype) {
+    case RESOURCELIB_DISPLAY_EMBED:
+        url_display_embed($url, $cm, $course);
+        break;
+    case RESOURCELIB_DISPLAY_FRAME:
+        url_display_frame($url, $cm, $course);
+        break;
+    default:
+        url_print_workaround($url, $cm, $course);
+        break;
 }
 
-}
