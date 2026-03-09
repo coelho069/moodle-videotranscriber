@@ -56,4 +56,55 @@ class brickfield_accessibility_dom_element extends DOMElement {
             return $this->cssstyle[$style];
         }
     }
+
+    // The following methods implement the DOMParentNode and DOMChildNode interfaces
+    // that DOMElement declares in PHP 8.0+. Without these stubs, PHP raises a fatal
+    // error claiming the abstract methods are not implemented.
+
+    /**
+     * Appends nodes after the last child of this element.
+     * @param mixed ...$nodes
+     */
+    public function append(mixed ...$nodes): void {
+        parent::append(...$nodes);
+    }
+
+    /**
+     * Prepends nodes before the first child of this element.
+     * @param mixed ...$nodes
+     */
+    public function prepend(mixed ...$nodes): void {
+        parent::prepend(...$nodes);
+    }
+
+    /**
+     * Inserts nodes immediately after this element.
+     * @param mixed ...$nodes
+     */
+    public function after(mixed ...$nodes): void {
+        parent::after(...$nodes);
+    }
+
+    /**
+     * Inserts nodes immediately before this element.
+     * @param mixed ...$nodes
+     */
+    public function before(mixed ...$nodes): void {
+        parent::before(...$nodes);
+    }
+
+    /**
+     * Removes this element from its parent.
+     */
+    public function remove(): void {
+        parent::remove();
+    }
+
+    /**
+     * Replaces this element with the given nodes.
+     * @param mixed ...$nodes
+     */
+    public function replaceWith(mixed ...$nodes): void {
+        parent::replaceWith(...$nodes);
+    }
 }
