@@ -324,7 +324,31 @@ function url_display_embed($url, $cm, $course) {
     $PAGE->activityheader->set_description(url_get_intro($url, $cm));
     url_print_header($url, $cm, $course);
 
-    echo $code;
+    global $DB;
+    $vt_record = null;
+    try {
+        $vt_record = $DB->get_record('local_videotranscriber', array('cmid' => $cm->id));
+    } catch (Exception $e) {}
+
+    if ($vt_record) {
+        $urltutor = new moodle_url('/local/videotranscriber/view.php', ['cmid' => $cm->id]);
+        $btn = '<div style="flex: 1; padding: 20px; background:#f4f6f8; border-radius:8px; border:1px solid #ddd; display:flex; flex-direction:column; justify-content:center; text-align:center;">';
+        $btn .= '<h3 style="margin-top:0; color:#2e7d32;">🤖 Tutor IA</h3>';
+        if (!empty($vt_record->transcription)) {
+            $btn .= '<p style="color:#2e7d32;font-weight:bold;">✔ Transcrição e Tutor disponíveis!</p>';
+            $btn .= html_writer::link($urltutor, 'Abrir Tutor IA', ['class' => 'btn btn-primary', 'style' => 'width:100%;font-size:16px;padding:12px; font-weight:bold;']);
+        } else {
+            $btn .= '<p style="color:#c62828;font-weight:bold;">⏳ Transcrição em andamento... <br>Atualize a página em breve.</p>';
+        }
+        $btn .= '</div>';
+
+        echo '<div style="display:flex; flex-wrap:wrap; gap:20px; align-items:stretch; margin-top:20px;">';
+        echo '<div style="flex: 3; min-width: 60%; margin:0; padding:0;">' . $code . '</div>';
+        echo $btn;
+        echo '</div>';
+    } else {
+        echo $code;
+    }
 
     echo $OUTPUT->footer();
     die;
