@@ -69,6 +69,7 @@ class observer {
         if (!$existing) {
             $vt_record             = new \stdClass();
             $vt_record->cmid       = $cmid;
+            $vt_record->url        = $video_url; // campo exigido pelo banco
             $vt_record->status     = 'processing';
             $vt_record->transcription = 'Aguardando início do processo...';
             $vt_record->timecreated  = time();
