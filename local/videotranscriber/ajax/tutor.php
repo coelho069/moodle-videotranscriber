@@ -14,7 +14,12 @@ $question = required_param('question', PARAM_TEXT);
 $cm = get_coursemodule_from_id('url', $cmid, 0, false, MUST_EXIST);
 $course = $DB->get_record('course', ['id' => $cm->course], '*', MUST_EXIST);
 require_login($course, false, $cm);
+/** @var \context $context */
 $context = context_module::instance($cmid);
+if (!$context) {
+    echo json_encode(['error' => 'Invalid context.']);
+    exit;
+}
 require_capability('mod/url:view', $context);
 
 $url_mod = $DB->get_record('url', ['id' => $cm->instance], '*', MUST_EXIST);

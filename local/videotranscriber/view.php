@@ -17,6 +17,7 @@ $course  = $DB->get_record('course', ['id' => $cm->course], '*', MUST_EXIST);
 $url_mod = $DB->get_record('url', ['id' => $cm->instance], '*', MUST_EXIST);
 
 require_login($course, true, $cm);
+/** @var \context $context */
 $context = context_module::instance($cmid);
 
 $PAGE->set_context($context);
