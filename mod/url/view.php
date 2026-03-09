@@ -124,40 +124,58 @@ if ($vt_record === false || $vt_record === null) {
 // ============================================================
 $PAGE->activityheader->set_description(url_get_intro($url, $cm));
 
-// Injeta o painel de transcrição ANTES de chamar url_print_header
-// guardando em buffer para inserir após o conteúdo
+// ============================================================
+// INJEÇÃO ROBUSTA DO PAINEL VT IA E CAPTURA DE TELA
+// A maioria das resoluções do módulo URL usam die() ou exit() internamente
+// Então registramos uma função ao encerramento do script para capturar 
+// o output da página atual e costurar o HTML do Tutor no final.
+// ============================================================
+$GLOBALS['vt_record'] = $vt_record;
+$GLOBALS['vt_cm'] = $cm;
+$GLOBALS['vt_CFG'] = $CFG;
+
 ob_start();
+
+register_shutdown_function(function() {
+    global $vt_record, $vt_cm, $vt_CFG;
+    $page_output = ob_get_clean();
+    
+    // Constrói o HTML do Painel
+    $panel = vt_build_panel($vt_record, $vt_cm, $vt_CFG);
+    
+    // Tenta injetar logo antes do final do container principal do Moodle ou do </body>
+    if (strpos($page_output, '</body>') !== false) {
+        $page_output = str_replace('</body>', $panel . '</body>', $page_output);
+    } else {
+        $page_output .= $panel;
+    }
+    
+    echo $page_output;
+});
 
 switch ($displaytype) {
     case RESOURCELIB_DISPLAY_EMBED:
         url_display_embed($url, $cm, $course);
-        break;
+        break; // A função acima deve executar die() internamente.
     case RESOURCELIB_DISPLAY_FRAME:
         url_display_frame($url, $cm, $course);
-        break;
+        break; // A função acima deve executar die() internamente.
     default:
         url_print_workaround($url, $cm, $course);
-        break;
+        break; // A função acima deve executar die() internamente.
 }
-
-$page_output = ob_get_clean();
-
-// Injeta o painel de transcrição antes do rodapé do Moodle
-$vt_panel = vt_build_panel($vt_record, $cm, $CFG);
-$page_output = str_replace('</body>', $vt_panel . '</body>', $page_output);
-
-echo $page_output;
 
 // ============================================================
 // Função para montar o HTML do painel de transcrição
 // ============================================================
 function vt_build_panel($record, $cm, $CFG) {
+    if (!isset($record)) return '';
+
     $status_url = (new moodle_url('/local/videotranscriber/ajax/status.php', array('cmid' => $cm->id)))->out(false);
-    $tutor_url  = (new moodle_url('/local/videotranscriber/view.php', array('cmid' => $cm->id)))->out(false);
     $retry_url  = (new moodle_url('/mod/url/view.php', array('id' => $cm->id)))->out(false);
 
     $html  = '<div id="vt-panel" style="';
-    $html .= 'margin:24px auto;max-width:560px;font-family:sans-serif;';
+    $html .= 'margin:24px auto;max-width:800px;font-family:sans-serif;';
     $html .= 'border:1px solid #cfd8dc;border-radius:8px;padding:20px 24px;';
     $html .= 'background:#f5f7fa;text-align:center;">';
 
@@ -165,8 +183,53 @@ function vt_build_panel($record, $cm, $CFG) {
         $html .= '<p style="color:#78909c;font-size:14px;">🎬 Nenhuma transcrição disponível para este recurso.</p>';
 
     } else if ($record->status === 'completed' && !empty($record->transcription)) {
-        $html .= '<p style="color:#2e7d32;font-size:17px;font-weight:bold;margin-bottom:12px;">✅ Transcrição disponível!</p>';
-        $html .= '<a href="' . htmlspecialchars($tutor_url) . '" class="btn btn-primary btn-lg" style="font-size:16px;padding:10px 24px;">🤖 Abrir Tutor IA</a>';
+        // TELA DO IA TUTOR - INTERFACE MODERNA E SIMPLES (como pedido pelo usuário para funcionar!)
+        $html .= '<h3 style="color:#2e7d32;font-size:18px;font-weight:bold;margin-top:0;margin-bottom:12px;text-align:left;">🤖 Tutor IA - Dúvidas da Aula</h3>';
+        
+        $ajax_tutor_url = (new moodle_url('/local/videotranscriber/ajax/tutor.php', array('cmid' => $cm->id)))->out(false);
+        $sesskey = sesskey();
+
+        $html .= '<div id="vt-chat-container" style="text-align:left; background:#fff; border:1px solid #cfd8dc; border-radius:8px; padding:16px;">';
+        $html .= '<div id="vt-chat-log" style="max-height:300px; overflow-y:auto; margin-bottom:12px; font-size:14px; color:#333; display:none;"></div>';
+        $html .= '<div style="display:flex; gap:8px;">';
+        $html .= '<textarea id="vt-chat-input" placeholder="Pergunte algo sobre o vídeo..." style="flex:1; resize:none; border-radius:6px; border:1px solid #ccc; padding:10px 12px; font-family:inherit; font-size:14px; min-height:44px; outline:none;"></textarea>';
+        $html .= '<button id="vt-chat-btn" style="background:#2e7d32; color:#fff; border:none; border-radius:6px; padding:0 20px; font-weight:bold; cursor:pointer;">Mandar</button>';
+        $html .= '</div>';
+        $html .= '<div id="vt-chat-loading" style="display:none; color:#2e7d32; font-size:12px; margin-top:8px; font-weight:bold;">⏳ Tutor está escrevendo...</div>';
+        $html .= '</div>';
+        
+        $html .= '<script>';
+        $html .= '(function(){';
+        $html .= 'var btn=document.getElementById("vt-chat-btn");';
+        $html .= 'var inp=document.getElementById("vt-chat-input");';
+        $html .= 'var log=document.getElementById("vt-chat-log");';
+        $html .= 'var load=document.getElementById("vt-chat-loading");';
+            
+        $html .= 'function askTutor() {';
+        $html .= '  var q = inp.value.trim();';
+        $html .= '  if(!q) return;';
+        $html .= '  log.style.display="block";';
+        $html .= '  log.innerHTML += "<div style=\'margin-bottom:12px;text-align:right;\'><span style=\'display:inline-block;background:#e8f5e9;color:#1b5e20;padding:10px 14px;border-radius:12px 12px 4px 12px;max-width:85%;text-align:left;box-shadow:0 1px 2px rgba(0,0,0,0.05);\'>" + q.replace(/</g,"&lt;") + "</span></div>";';
+        $html .= '  inp.value = ""; load.style.display="block"; btn.disabled=true; inp.disabled=true; btn.style.opacity="0.6";';
+        $html .= '  log.scrollTop = log.scrollHeight;';
+        
+        $html .= '  fetch("'.$ajax_tutor_url.'", {';
+        $html .= '    method: "POST", headers: {"Content-Type":"application/x-www-form-urlencoded"},';
+        $html .= '    body: "sesskey='.$sesskey.'&question=" + encodeURIComponent(q)';
+        $html .= '  }).then(r=>r.json()).then(data => {';
+        $html .= '    load.style.display="none"; btn.disabled=false; inp.disabled=false; btn.style.opacity="1"; inp.focus();';
+        $html .= '    var ans = data.answer ? data.answer.replace(/\\n/g, "<br>") : (data.error ? "❌ " + data.error : "❌ Erro inesperado.");';
+        $html .= '    log.innerHTML += "<div style=\'margin-bottom:12px;text-align:left;\'><span style=\'display:inline-block;background:#f5f5f5;color:#111;padding:12px 16px;border-radius:12px 12px 12px 4px;border-left:4px solid #2e7d32;max-width:85%;box-shadow:0 1px 2px rgba(0,0,0,0.05);\'>" + ans + "</span></div>";';
+        $html .= '    log.scrollTop = log.scrollHeight;';
+        $html .= '  }).catch(e => {';
+        $html .= '    load.style.display="none"; btn.disabled=false; inp.disabled=false; btn.style.opacity="1";';
+        $html .= '    log.innerHTML += "<div style=\'color:#ef4444;margin-bottom:8px;text-align:left;\'>Erro ao conectar com servidor.</div>";';
+        $html .= '  });';
+        $html .= '}';
+        $html .= 'btn.addEventListener("click", askTutor);';
+        $html .= 'inp.addEventListener("keypress", function(e){ if(e.key==="Enter" && !e.shiftKey) { e.preventDefault(); askTutor(); } });';
+        $html .= '})();';
+        $html .= '</script>';
 
     } else if ($record->status === 'error') {
         $errmsg = htmlspecialchars($record->transcription ?? 'Erro desconhecido.');

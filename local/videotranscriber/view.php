@@ -235,9 +235,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !empty($_POST['question'])) {
 </style>
 
 <div id="vt-tutor-wrap">
-    <a href="<?php echo new moodle_url('/mod/url/view.php', ['id' => $cmid]); ?>" class="back-link">
-        ← Voltar para o vídeo
-    </a>
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+        <a href="<?php echo new moodle_url('/mod/url/view.php', ['id' => $cmid]); ?>" class="back-link" style="margin-bottom: 0;">
+            ← Voltar para o vídeo
+        </a>
+        <a href="<?php echo new moodle_url('/local/videotranscriber/course_tutors.php', ['courseid' => $course->id]); ?>" class="back-link" style="margin-bottom: 0; color: #4b5563;">
+            📚 Todas as aulas do curso
+        </a>
+    </div>
 
     <h2>🤖 Tutor de IA</h2>
     <p class="subtitle">Baseado no conteúdo do vídeo: <strong><?php echo $video_name; ?></strong></p>
