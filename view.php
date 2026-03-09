@@ -12,9 +12,44 @@ $context = context_module::instance($cmid);
 require_capability('mod/url:view', $context);
 
 $record = $DB->get_record('local_videotranscriber', ['cmid' => $cmid]);
-if (!$record) {
-    throw new moodle_exception('notranscription', 'local_videotranscriber',
-        new moodle_url('/course/view.php', ['id' => $course->id]));
+
+if (!$record || empty($record->transcription)) {
+    if ($action === 'ask') {
+        header('Content-Type: application/json; charset=utf-8');
+        http_response_code(400);
+        echo json_encode(['success' => false, 'error' => 'A transcrição para este vídeo ainda não está pronta.']);
+        exit;
+    }
+    
+    $PAGE->set_url('/local/videotranscriber/view.php', ['cmid' => $cmid]);
+    $PAGE->set_context($context);
+    $PAGE->set_course($course);
+    $PAGE->set_cm($cm);
+    $PAGE->set_title('Tutor IA: ' . $cm->name);
+    $PAGE->set_heading($course->fullname);
+    $PAGE->set_pagelayout('incourse');
+    
+    echo $OUTPUT->header();
+    
+    echo html_writer::start_div('card shadow-sm mb-4 mt-4');
+    echo html_writer::start_div('card-header bg-warning text-dark');
+    echo html_writer::tag('h4', '⏳ Transcrição Indisponível', ['class' => 'mb-0']);
+    echo html_writer::end_div();
+    echo html_writer::start_div('card-body');
+    echo html_writer::tag('p', 'A transcrição para este vídeo ainda não foi concluída ou o registro não foi encontrado. O processamento geralmente leva alguns minutos. Por favor, aguarde e recarregue a página.', ['class' => 'mb-0']);
+    echo html_writer::end_div();
+    echo html_writer::end_div();
+    
+    echo html_writer::start_div('mt-4');
+    echo html_writer::link(
+        new moodle_url('/course/view.php', ['id' => $course->id]),
+        '← Voltar ao curso',
+        ['class' => 'btn btn-outline-secondary btn-sm']
+    );
+    echo html_writer::end_div();
+    
+    echo $OUTPUT->footer();
+    exit;
 }
 
 // AJAX - processa pergunta.
@@ -72,9 +107,11 @@ if ($action === 'ask' && !empty($question)) {
     }
 
     // === CRIAR MENSAGENS ===
-    $system_msg = "Voce e um tutor educacional. Use APENAS a transcricao abaixo para responder.\n"
-                . "Se a resposta nao estiver na transcricao, diga isso claramente.\n"
-                . "Responda em portugues do Brasil de forma clara e didatica.\n\n"
+    $system_msg = "ATENCAO MAXIMA: Voce e um assistente educacional estritamente limitado ao texto fornecido.\n"
+                . "REGRA 1: baseie-se EXCLUSIVAMENTE nas palavras da transcricao do video abaixo.\n"
+                . "REGRA 2: E expressamente PROIBIDO inventar informacao, deduzir coisas obvias ou usar seu conhecimento previo.\n"
+                . "REGRA 3: Se a transcricao nao contiver a resposta exata para a pergunta do aluno, VOCE DEVE RESPONDER EXATAMENTE O SEGUINTE: 'Sinto muito, mas essa informacao nao foi mencionada no video.'\n\n"
+                . "Responda de forma clara, amigavel e em portugues do Brasil.\n\n"
                 . "=== TRANSCRICAO ===\n"
                 . $transcription
                 . "\n=== FIM DA TRANSCRICAO ===";

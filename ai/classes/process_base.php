@@ -99,10 +99,12 @@ abstract class process_base {
      * @param mixed ...$args The arguments to pass to the response class constructor.
      * @return response_base
      */
-    protected function get_response(...$args): response_base {
+    protected function get_response(bool $success, ?string $errorcode = null, ?string $errormessage = null): response_base {
         $responseclassname = $this->action::get_response_classname();
         return new $responseclassname(
-            ...$args,
+            $success,
+            $errorcode,
+            $errormessage,
         );
     }
 }

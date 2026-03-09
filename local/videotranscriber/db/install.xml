@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<XMLDB PATH="local/videotranscriber/db" VERSION="20240101" COMMENT="XMLDB file for local plugin videotranscriber">
+  <TABLES>
+    <TABLE NAME="local_videotranscriber" COMMENT="Stores video transcriptions linked to course modules">
+      <FIELDS>
+        <FIELD NAME="id"            TYPE="int"  LENGTH="10" NOTNULL="true" SEQUENCE="true"/>
+        <FIELD NAME="cmid"          TYPE="int"  LENGTH="10" NOTNULL="true" SEQUENCE="false" COMMENT="Course module ID (mdl_course_modules.id)"/>
+        <FIELD NAME="status"        TYPE="char" LENGTH="20" NOTNULL="true" DEFAULT="processing" SEQUENCE="false" COMMENT="processing | completed | error"/>
+        <FIELD NAME="transcription" TYPE="text" NOTNULL="false" SEQUENCE="false" COMMENT="Full transcription text or interim status message"/>
+        <FIELD NAME="timecreated"   TYPE="int"  LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false"/>
+        <FIELD NAME="timemodified"  TYPE="int"  LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false"/>
+      </FIELDS>
+      <KEYS>
+        <KEY NAME="primary" TYPE="primary" FIELDS="id"/>
+      </KEYS>
+      <INDEXES>
+        <INDEX NAME="cmid" UNIQUE="true" FIELDS="cmid"/>
+      </INDEXES>
+    </TABLE>
+  </TABLES>
+</XMLDB>

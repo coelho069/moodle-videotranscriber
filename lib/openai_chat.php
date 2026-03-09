@@ -2,30 +2,20 @@
 
 defined('MOODLE_INTERNAL') || die();
 
-function videotranscriber_openai_chat($transcription, $question) {
+function videotranscriber_openai_chat($transcription, $question)
+{
 
     $apikey = getenv('OPENAI_API_KEY');
 
-    $prompt = "Use a transcrição da aula para ensinar o aluno.
-
-Regras:
-1. Use apenas a transcrição.
-2. Não invente informações.
-3. Explique de forma simples.
-4. Use exemplos quando possível.
-
-Transcrição da aula:
-".$transcription."
-
-Pergunta do aluno:
-".$question;
+    $prompt = "Transição da aula (Contexto):\n" . $transcription . "\n\n" . "Pergunta do aluno:\n" . $question;
 
     $data = [
         "model" => "gpt-4o-mini",
+        "temperature" => 0.0,
         "messages" => [
             [
                 "role" => "system",
-                "content" => "Você é um tutor educacional. Responda apenas com base na transcrição."
+                "content" => "ATENÇÃO MÁXIMA: Você é um assistente educacional estritamente limitado ao texto fornecido. REGRA 1: baseie-se EXCLUSIVAMENTE nas palavras da transcrição do vídeo. REGRA 2: É expressamente PROIBIDO inventar informação ou deduzir coisas óbvias. REGRA 3: Se a transcrição não contiver a resposta exata, VOCÊ DEVE RESPONDER EXATAMENTE: 'Sinto muito, mas essa informação não foi mencionada no vídeo.'"
             ],
             [
                 "role" => "user",
@@ -40,7 +30,7 @@ Pergunta do aluno:
 
     $headers = [
         "Content-Type: application/json",
-        "Authorization: Bearer ".$apikey
+        "Authorization: Bearer " . $apikey
     ];
 
     curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
@@ -57,7 +47,7 @@ Pergunta do aluno:
 
         curl_close($ch);
 
-        return "Erro CURL: ".$error;
+        return "Erro CURL: " . $error;
     }
 
     $httpcode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
@@ -66,7 +56,7 @@ Pergunta do aluno:
 
     if ($httpcode != 200) {
 
-        return "Erro HTTP ".$httpcode;
+        return "Erro HTTP " . $httpcode;
     }
 
     $json = json_decode($response, true);

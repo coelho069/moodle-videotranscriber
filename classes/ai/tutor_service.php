@@ -1,7 +1,8 @@
 <?php
-defined('MOODLE_INTERNAL') || die();
 
 namespace local_videotranscriber\ai;
+
+defined('MOODLE_INTERNAL') || die();
 
 class tutor_service {
     private string $apikey;
@@ -19,7 +20,7 @@ class tutor_service {
         $question = trim($question);
 
         if ($question === '') {
-            throw new \invalid_argument_exception('Pergunta vazia.');
+            throw new \InvalidArgumentException('Pergunta vazia.');
         }
 
         $context = $this->build_context($contextchunks);

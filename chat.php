@@ -61,7 +61,7 @@ if (trim($context) === '') {
 }
 
 // montar prompt seguro
-$systeminstr = "Você é um tutor educacional. Use exclusivamente o contexto de transcrição fornecido. Se a resposta não estiver na transcrição, responda: \"Não encontrei essa informação na transcrição da aula.\" Explique de forma simples e dê exemplos apenas se estiverem na transcrição.";
+$systeminstr = "ATENÇÃO MÁXIMA: Você é um assistente educacional estritamente limitado ao texto fornecido. REGRA 1: baseie-se EXCLUSIVAMENTE nas palavras da transcrição do vídeo. REGRA 2: É expressamente PROIBIDO inventar informação, deduzir coisas óbvias ou usar seu conhecimento prévio. REGRA 3: Se a transcrição não contiver a resposta exata para a pergunta, VOCÊ DEVE RESPONDER EXATAMENTE: 'Sinto muito, mas essa informação não foi mencionada no vídeo.'";
 
 // corpo enviado para API
 $prompt = "Contexto da transcrição:\n" . $context . "\n\nPergunta do aluno:\n" . $question;
