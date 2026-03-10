@@ -324,7 +324,31 @@ function url_display_embed($url, $cm, $course) {
     $PAGE->activityheader->set_description(url_get_intro($url, $cm));
     url_print_header($url, $cm, $course);
 
-    echo $code;
+    // INJEÇÃO DA IA LADO A LADO
+    global $DB;
+    $btn_html = '';
+    if ($vt_record = $DB->get_record('local_videotranscriber', array('cmid' => $cm->id))) {
+        $btn_html .= '<div style="flex: 1; min-width: 250px; padding: 20px; background: #f4f6f8; border-radius: 8px; border: 1px solid #ddd; display: flex; flex-direction: column; justify-content: center; text-align: center;">';
+        $btn_html .= '<h3 style="margin-top: 0; color: #2e7d32; font-size: 20px; font-weight: bold;">🤖 Tutor IA</h3>';
+        
+        if (!empty($vt_record->transcription)) {
+            $tutor_url = new moodle_url('/local/videotranscriber/view.php', ['cmid' => $cm->id]);
+            $btn_html .= '<p style="color: #2e7d32; font-weight: bold;">✔ Transcrição e Tutor disponíveis!</p>';
+            $btn_html .= '<a href="' . $tutor_url . '" class="btn btn-primary" style="width: 100%; font-size: 16px; padding: 12px; font-weight: bold; text-decoration: none;">Abrir Tutor IA</a>';
+        } else {
+            $btn_html .= '<p style="color: #c62828; font-weight: bold;">⏳ Transcrição em andamento... <br>Atualize a página em breve.</p>';
+        }
+        $btn_html .= '</div>';
+    }
+
+    if (!empty($btn_html)) {
+        echo '<div style="display: flex; flex-wrap: wrap; gap: 20px; align-items: stretch; margin-top: 20px; justify-content: center;">';
+        echo '<div style="flex: 3; min-width: 60%;">' . $code . '</div>';
+        echo $btn_html;
+        echo '</div>';
+    } else {
+        echo $code;
+    }
 
     echo $OUTPUT->footer();
     die;
