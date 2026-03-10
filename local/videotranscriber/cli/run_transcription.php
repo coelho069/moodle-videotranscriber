@@ -336,7 +336,13 @@ if ($size_bytes > 25 * 1024 * 1024) {
 // ================================================================
 // 9. OPENAI WHISPER — transcrição
 // ================================================================
-vt_status($record_id, "[60%] 🤖 Enviando {$size_mb}MB para o Whisper transcrever... (pode levar minutos)");
+vt_status($record_id, "[60%] 🤖 Enviando {$size_mb}MB para IA transcrever... (pode levar minutos)");
+
+$apiurl = get_config('local_videotranscriber', 'apiurl');
+if (empty($apiurl)) { $apiurl = 'https://api.openai.com/v1'; }
+
+$transcribemodel = get_config('local_videotranscriber', 'transcribemodel');
+if (empty($transcribemodel)) { $transcribemodel = 'whisper-1'; }
 
 // Detecta o mime type correto para o Whisper
 $ext_map = [
@@ -353,11 +359,11 @@ $mime_type = $ext_map[$file_ext] ?? 'audio/mpeg';
 
 $ch = curl_init();
 curl_setopt_array($ch, [
-    CURLOPT_URL            => 'https://api.openai.com/v1/audio/transcriptions',
+    CURLOPT_URL            => rtrim($apiurl, '/') . '/audio/transcriptions',
     CURLOPT_RETURNTRANSFER => true,
     CURLOPT_POST           => true,
     CURLOPT_POSTFIELDS     => [
-        'model'           => 'whisper-1',
+        'model'           => $transcribemodel,
         'file'            => new CURLFile($audio_file, $mime_type, 'audio.' . $file_ext),
         'response_format' => 'text',
         'language'        => 'pt',    // força português (melhora precisão)

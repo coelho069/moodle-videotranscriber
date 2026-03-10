@@ -51,8 +51,14 @@ $system_prompt = "Você é um tutor de IA especializado no conteúdo do seguinte
     "Não invente informações. Se a pergunta não puder ser respondida com o conteúdo do vídeo, diga isso claramente.\n\n" .
     "=== TRANSCRIÇÃO DO VÍDEO ===\n" . mb_substr($transcription, 0, 12000) . "\n=== FIM DA TRANSCRIÇÃO ===";
 
+$apiurl = get_config('local_videotranscriber', 'apiurl');
+if (empty($apiurl)) { $apiurl = 'https://api.openai.com/v1'; }
+
+$chatmodel = get_config('local_videotranscriber', 'chatmodel');
+if (empty($chatmodel)) { $chatmodel = 'gpt-4o-mini'; }
+
 $payload = json_encode([
-    'model'    => 'gpt-4o-mini',
+    'model'    => $chatmodel,
     'messages' => [
         ['role' => 'system',  'content' => $system_prompt],
         ['role' => 'user',    'content' => $question],
@@ -61,7 +67,7 @@ $payload = json_encode([
     'temperature' => 0.3,
 ]);
 
-$ch = curl_init('https://api.openai.com/v1/chat/completions');
+$ch = curl_init(rtrim($apiurl, '/') . '/chat/completions');
 curl_setopt_array($ch, [
     CURLOPT_RETURNTRANSFER => true,
     CURLOPT_POST           => true,
