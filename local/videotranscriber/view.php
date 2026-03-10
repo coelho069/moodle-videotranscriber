@@ -271,13 +271,26 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !empty($_POST['question'])) {
 
     <!-- Formulário de pergunta -->
     <div class="vt-card">
-        <form method="POST" action="">
+        <form method="POST" action="" id="vt-form">
             <input type="hidden" name="sesskey" value="<?php echo sesskey(); ?>">
             <span class="vt-label">💡 Faça uma pergunta sobre o vídeo</span>
             <div class="vt-input-wrap">
                 <textarea name="question" id="vt-question" placeholder="Ex: Qual é o principal tema abordado no vídeo?" required><?php echo htmlspecialchars($user_question); ?></textarea>
                 <button type="submit" id="vt-submit">Perguntar →</button>
             </div>
+        </form>
+    </div>
+    
+    <script>
+        document.getElementById('vt-form').addEventListener('submit', function() {
+            var btn = document.getElementById('vt-submit');
+            btn.innerHTML = '⏳ Pensando...';
+            btn.style.opacity = '0.7';
+            btn.style.cursor = 'not-allowed';
+            // Previne múltiplos cliques
+            setTimeout(function() { btn.disabled = true; }, 10);
+        });
+    </script>
         </form>
     </div>
 </div>
