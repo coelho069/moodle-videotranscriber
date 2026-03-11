@@ -37,16 +37,6 @@ function local_videotranscriber_extend_navigation_course($navigation, $course, $
 function local_videotranscriber_extend_navigation(global_navigation $navigation) {
     global $PAGE, $DB;
     
-    // Injeta o botão automaticamente se for um recurso do tipo URL
-    if ($PAGE->pagetype === 'mod-url-view') {
-        $cmid = optional_param('id', 0, PARAM_INT);
-        if ($cmid) {
-            $record = $DB->get_record('local_videotranscriber', array('cmid' => $cmid));
-            if ($record) {
-                $has_transcription = !empty($record->transcription) ? true : false;
-                $tutor_url = (new moodle_url('/local/videotranscriber/view.php', ['cmid' => $cmid]))->out(false);
-                $PAGE->requires->js_call_amd('local_videotranscriber/injector', 'init', [$cmid, $has_transcription, $tutor_url]);
-            }
-        }
-    }
+    // A injeção do botão Tutor IA agora é feita direto no servidor via PHP 
+    // dentro de mod/url/locallib.php, então não precisamos mais injetar JS aqui.
 }
